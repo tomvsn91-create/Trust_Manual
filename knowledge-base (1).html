@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>ລະບົບຄັງຄວາມຮູ້ | Knowledge Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:'IBM Plex Sans','Noto Sans Lao',system-ui,sans-serif;background:#EDF1F7;color:#1A2340;min-height:100vh;line-height:1.5}
+button,input,select,textarea{font-family:inherit}
+:root{
+  --navy:#0C1829;--navy-mid:#152238;--navy-light:#1E3355;
+  --gold:#C49A28;--gold-dim:#8C6E1A;--gold-bg:#FDF6E3;
+  --blue:#1750A0;--blue-mid:#2361B8;--blue-light:#EBF2FF;--blue-pale:#F4F8FF;
+  --bg:#EDF1F7;--bg-white:#FFFFFF;
+  --border:#D5DCEC;--border-mid:#C0CBDE;
+  --text:#1A2340;--text-mid:#4A5878;--text-light:#7B8BAA;--text-mute:#A0AABB;
+  --red:#C0292A;--red-bg:#FEF2F2;--red-border:#FECACA;
+  --green:#1A7340;--green-bg:#F0FDF4;
+  --amber:#92530A;--amber-bg:#FFFBEB;
+  --sidebar-w:264px;--header-h:62px;
+  --radius:8px;--radius-lg:12px;--radius-xl:16px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.07);
+  --shadow:0 1px 4px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 12px rgba(0,0,0,.1);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.15)
+}
+#app{display:flex;min-height:100vh}
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar-w);background:var(--navy);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:200;transition:transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.sb-brand{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:13px}
+.sb-emblem{width:44px;height:44px;border-radius:11px;flex-shrink:0;background:linear-gradient(135deg,var(--gold) 0%,#A07820 100%);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--navy);box-shadow:0 2px 8px rgba(196,154,40,.35)}
+.sb-name{font-size:13.5px;font-weight:700;color:#FFF;line-height:1.25}
+.sb-sub{font-size:10.5px;color:#5A7AAC;margin-top:2px;letter-spacing:.3px}
+.sb-sec{font-size:9.5px;font-weight:700;color:#344F78;letter-spacing:1.2px;text-transform:uppercase;padding:18px 20px 5px}
+.sb-nav{flex:1;padding:6px 12px;overflow-y:auto}
+.sb-nav::-webkit-scrollbar{width:3px}
+.sb-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9.5px 12px;border-radius:var(--radius);color:#7A98C8;font-size:13.5px;cursor:pointer;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;transition:background .15s,color .15s;position:relative}
+.nav-item i{width:17px;text-align:center;font-size:14px;flex-shrink:0}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#C5D6F0}
+.nav-item.active{background:rgba(255,255,255,.1);color:#FFF;font-weight:500}
+.nav-item.active::before{content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:3px;height:24px;background:var(--gold);border-radius:0 2px 2px 0}
+.nav-badge{margin-left:auto;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;min-width:22px;text-align:center}
+.nav-div{height:1px;background:rgba(255,255,255,.06);margin:8px 4px}
+.sb-foot{padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
+.u-chip{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.u-chip.pub{background:var(--blue-mid);color:#FFF}
+.u-chip.adm{background:linear-gradient(135deg,var(--gold),#A07820);color:var(--navy)}
+.u-info{flex:1;min-width:0}
+.u-name{font-size:12.5px;font-weight:500;color:#DDE8F8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.u-tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;margin-top:2px;letter-spacing:.5px}
+.u-tag.pub{background:rgba(255,255,255,.1);color:#7A98C8}
+.u-tag.adm{background:var(--gold);color:var(--navy)}
+.sb-logout{color:#3C5580;background:none;border:none;cursor:pointer;padding:7px;border-radius:6px;font-size:13px;transition:all .15s;flex-shrink:0}
+.sb-logout:hover{color:#8BA4CA;background:rgba(255,255,255,.07)}
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.top-hdr{height:var(--header-h);background:var(--bg-white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 26px;gap:14px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.hdr-info{flex:0 0 auto}
+.hdr-title{font-size:15px;font-weight:600;color:var(--text);line-height:1.2}
+.hdr-crumb{font-size:11px;color:var(--text-light);margin-top:1px}
+.hdr-sep{width:1px;height:28px;background:var(--border);flex-shrink:0}
+.search-bar{flex:1;max-width:380px;position:relative;margin-left:auto}
+.search-bar input{width:100%;height:38px;border-radius:var(--radius);border:1.5px solid var(--border);padding:0 12px 0 37px;font-size:13px;background:var(--bg);color:var(--text);transition:all .15s}
+.search-bar input:focus{outline:none;border-color:var(--blue);background:#FFF}
+.search-bar i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-light);font-size:14px;pointer-events:none}
+.hamburger{display:none;background:none;border:none;cursor:pointer;font-size:19px;color:var(--text-mid);padding:6px;border-radius:6px}
+.hamburger:hover{background:var(--bg)}
+.hdr-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.rt-badge{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--green-bg);border:1px solid #BBF7D0;font-size:12px;font-weight:600;color:var(--green)}
+.rt-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.8s ease-in-out infinite;flex-shrink:0}
+.rt-badge.off{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+.rt-badge.off .rt-dot{background:var(--red);animation:none}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.content{flex:1;padding:26px 28px}
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--blue);color:#FFF}.btn-primary:not(:disabled):hover{background:var(--blue-mid)}
+.btn-ghost{background:none;color:var(--text-mid);border:1.5px solid var(--border)}.btn-ghost:not(:disabled):hover{background:var(--bg)}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}.btn-danger:not(:disabled):hover{background:#FEE2E2}
+.btn-sm{padding:6px 13px;font-size:12px}
+.btn-xs{padding:4px 10px;font-size:11px}
+.btn-icon{width:32px;height:32px;padding:0;justify-content:center;border-radius:var(--radius)}
+/* ── CARD ── */
+.card{background:var(--bg-white);border-radius:var(--radius-lg);border:1px solid var(--border)}
+.card-hdr{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.card-ttl{font-size:14px;font-weight:600;color:var(--text)}
+.card-body{padding:22px}
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px}
+.stat-card{background:var(--bg-white);border-radius:var(--radius-lg);padding:20px;border:1px solid var(--border);display:flex;align-items:center;gap:16px;box-shadow:var(--shadow-sm);transition:transform .15s,box-shadow .15s}
+.stat-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.stat-ico{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.si-blue{background:var(--blue-light);color:var(--blue)}
+.si-gold{background:var(--gold-bg);color:var(--amber)}
+.si-green{background:var(--green-bg);color:var(--green)}
+.si-red{background:var(--red-bg);color:var(--red)}
+.stat-val{font-size:26px;font-weight:700;color:var(--text);line-height:1}
+.stat-lbl{font-size:12px;color:var(--text-light);margin-top:4px}
+/* ── FILTER ── */
+.filter-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.pill{padding:5px 15px;border-radius:20px;font-size:12.5px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--bg-white);color:var(--text-mid);transition:all .15s}
+.pill:hover{border-color:var(--blue);color:var(--blue)}
+.pill.active{background:var(--blue);border-color:var(--blue);color:#FFF;box-shadow:0 2px 6px rgba(23,80,160,.3)}
+.pill-n{display:inline-block;font-size:10px;font-weight:600;background:rgba(255,255,255,.25);padding:0 5px;border-radius:8px;margin-left:4px}
+.pill:not(.active) .pill-n{background:var(--bg);color:var(--text-light)}
+/* ── DOC LIST ── */
+.doc-list{display:flex;flex-direction:column}
+.doc-row{display:flex;align-items:center;gap:15px;padding:14px 20px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;background:var(--bg-white);width:100%;border:none;text-align:left}
+.doc-row:hover{background:#F2F7FF}
+.doc-row:last-child{border-bottom:none}
+.fi{width:44px;height:44px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px}
+.fi-pdf{background:#FEF2F2;color:#DC2626}
+.fi-img{background:#F0FDF4;color:#16A34A}
+.fi-doc{background:#EFF6FF;color:#2563EB}
+.fi-xls{background:#F0FDF4;color:#15803D}
+.fi-ppt{background:#FFF7ED;color:#EA580C}
+.fi-other{background:#F5F3FF;color:#7C3AED}
+.doc-info{flex:1;min-width:0}
+.doc-name{font-size:14px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px}
+.doc-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cat-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:4px;font-size:11px;font-weight:500;background:var(--blue-light);color:var(--blue)}
+.mc{font-size:11.5px;color:var(--text-light);display:flex;align-items:center;gap:4px}
+.mc i{font-size:10px}
+.doc-act{display:flex;align-items:center;gap:7px;flex-shrink:0}
+/* ── EMPTY ── */
+.empty{text-align:center;padding:72px 24px;color:var(--text-light)}
+.empty i{font-size:52px;opacity:.2;display:block;margin-bottom:18px}
+.empty h3{font-size:15px;font-weight:500;color:var(--text-mid);margin-bottom:6px}
+.empty p{font-size:13px;line-height:1.6}
+/* ── FORM ── */
+.fg{display:flex;flex-direction:column;gap:6px}
+.fl{font-size:12.5px;font-weight:600;color:var(--text-mid);letter-spacing:.2px}
+.fl .req{color:var(--red);margin-left:2px}
+.fc{height:40px;border-radius:var(--radius);border:1.5px solid var(--border);padding:0 12px;font-size:13.5px;color:var(--text);background:var(--bg-white);transition:border-color .15s,box-shadow .15s;width:100%}
+.fc:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(23,80,160,.08)}
+.fc.ta{height:auto;padding:10px 12px;resize:vertical;min-height:80px}
+select.fc{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237B8BAA' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;appearance:none}
+.fhint{font-size:11.5px;color:var(--text-light);margin-top:2px}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+/* ── UPLOAD ── */
+.upzone{border:2px dashed var(--border-mid);border-radius:var(--radius-lg);padding:52px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.upzone:hover,.upzone.drag-over{border-color:var(--blue);background:var(--blue-pale)}
+.upzone-ico{font-size:42px;color:var(--text-mute);margin-bottom:14px;transition:color .2s}
+.upzone:hover .upzone-ico,.upzone.drag-over .upzone-ico{color:var(--blue)}
+.upzone h3{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.upzone p{font-size:13px;color:var(--text-light);line-height:1.6}
+.upzone span{color:var(--blue);font-weight:500}
+/* ── FILE QUEUE ── */
+.fqueue{margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.fq-item{background:var(--bg-white);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;display:flex;align-items:center;gap:12px}
+.fq-name{flex:1;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fq-sz{font-size:11.5px;color:var(--text-light);flex-shrink:0}
+.fq-rm{color:var(--red);background:none;border:none;cursor:pointer;font-size:15px;padding:4px;border-radius:4px;flex-shrink:0}
+.fq-rm:hover{background:var(--red-bg)}
+/* ── PROGRESS ── */
+.prog-wrap{margin-top:14px}
+.prog-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.prog-lbl{font-size:12.5px;color:var(--text-mid);font-weight:500}
+.prog-pct{font-size:12.5px;font-weight:700;color:var(--blue)}
+.prog-bar{height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue-mid));border-radius:4px;transition:width .25s}
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--bg)}
+th{padding:10px 18px;text-align:left;font-weight:600;font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:13px 18px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F6F9FF}
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:900;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:#FFF;border-radius:var(--radius-xl);max-width:500px;width:100%;padding:30px;transform:translateY(12px) scale(.98);transition:transform .2s;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.overlay.open .modal{transform:none}
+.modal-hd{display:flex;align-items:flex-start;gap:14px;margin-bottom:12px}
+.modal-ico{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.modal-ttl{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--text-mid);line-height:1.6}
+.modal-act{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:18px;border-top:1px solid var(--border)}
+/* ── TOAST ── */
+#toasts{position:fixed;top:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--navy);color:#FFF;padding:11px 16px;border-radius:var(--radius);font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;max-width:340px;box-shadow:var(--shadow-md);pointer-events:all;animation:tIn .3s cubic-bezier(.4,0,.2,1)}
+.toast.ok{background:var(--green)}.toast.err{background:var(--red)}.toast.warn{background:var(--amber)}
+@keyframes tIn{from{transform:translateX(110%);opacity:0}to{transform:none;opacity:1}}
+/* ── LOADER ── */
+.page-loader{position:fixed;inset:0;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
+.ld-emblem{width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,var(--gold),#A07820);display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--navy);margin-bottom:22px;box-shadow:0 4px 20px rgba(196,154,40,.4)}
+.ld-title{font-size:20px;font-weight:700;color:#FFF;margin-bottom:4px}
+.ld-sub{font-size:13px;color:#5A7AAC;margin-bottom:30px}
+.ld-spin{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199}
+/* ── LOGIN ── */
+#login-page{min-height:100vh;display:none;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--navy) 0%,#0B2040 60%,var(--navy-light) 100%);padding:24px;position:relative;overflow:hidden}
+.lg-card{background:#FFF;border-radius:var(--radius-xl);padding:42px;width:100%;max-width:420px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.lg-emblem{width:68px;height:68px;border-radius:16px;background:linear-gradient(135deg,var(--gold),#A07820);display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--navy);margin:0 auto 16px;box-shadow:0 4px 16px rgba(196,154,40,.4)}
+.lg-org{text-align:center;font-size:17px;font-weight:700;color:var(--text);margin-bottom:3px}
+.lg-sys{text-align:center;font-size:12px;color:var(--text-light);margin-bottom:28px;letter-spacing:.3px}
+.lg-div{height:1px;background:var(--border);margin-bottom:24px}
+.lg-notice{background:var(--amber-bg);border:1px solid #FDE68A;border-radius:var(--radius);padding:11px 14px;margin-bottom:22px;display:flex;gap:10px;align-items:flex-start}
+.lg-notice i{color:var(--amber);margin-top:1px;flex-shrink:0}
+.lg-notice p{font-size:12.5px;color:var(--amber);line-height:1.5}
+.lg-field{position:relative;margin-bottom:13px}
+.lg-field i.ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-light);font-size:14px}
+.lg-ctrl{width:100%;height:46px;border-radius:var(--radius);border:1.5px solid var(--border);padding:0 12px 0 40px;font-size:14px;color:var(--text);background:var(--bg);transition:border-color .15s}
+.lg-ctrl:focus{outline:none;border-color:var(--blue);background:#FFF}
+.lg-btn{width:100%;height:46px;border-radius:var(--radius);background:var(--navy);color:#FFF;border:none;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px;transition:background .15s}
+.lg-btn:hover{background:var(--navy-light)}
+.lg-btn:disabled{opacity:.6;cursor:not-allowed}
+.lg-err{color:var(--red);font-size:12.5px;text-align:center;margin-top:10px;min-height:18px}
+.lg-back{text-align:center;margin-top:18px;font-size:13px;color:var(--text-light)}
+.lg-back a{color:var(--blue);cursor:pointer;font-weight:500}
+.lg-back a:hover{text-decoration:underline}
+/* ── VIEWER ── */
+.view-hdr{background:var(--bg-white);border-radius:var(--radius-lg);padding:22px;border:1px solid var(--border);margin-bottom:16px}
+.view-fi{width:60px;height:60px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.view-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:10px}
+.view-meta{display:flex;gap:18px;flex-wrap:wrap}
+.view-mi{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-light)}
+.view-mi i{color:var(--gold);font-size:12px}
+.view-desc{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13.5px;color:var(--text-mid);line-height:1.65}
+.prev-frame{width:100%;height:560px;border:none;border-radius:var(--radius-lg)}
+.prev-img{border-radius:var(--radius-lg);width:100%}
+/* ── LOADING SCREEN (view) ── */
+.view-loading{text-align:center;padding:60px 24px}
+.view-loading i{font-size:36px;color:var(--blue);opacity:.6;display:block;margin-bottom:14px}
+.view-loading p{font-size:13px;color:var(--text-light)}
+.view-load-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin:12px auto 0;max-width:200px}
+.view-load-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue-mid));border-radius:3px;animation:loadAnim 1.2s ease-in-out infinite}
+@keyframes loadAnim{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
+/* ── FREE BADGE ── */
+.free-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;background:var(--green-bg);border:1px solid #BBF7D0;border-radius:20px;font-size:11px;font-weight:600;color:var(--green);margin-left:8px}
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:none}
+  .sb-overlay{display:block;opacity:0;pointer-events:none;transition:opacity .28s}.sb-overlay.open{opacity:1;pointer-events:all}
+  .main{margin-left:0}.hamburger{display:block}
+  .search-bar{max-width:none;margin-left:0;flex:1}
+  .content{padding:16px}.top-hdr{padding:0 16px;gap:10px}
+  .stats-grid{grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+  .form-grid-2{grid-template-columns:1fr}.rt-badge span{display:none}
+}
+@media(max-width:480px){
+  .stats-grid{gap:10px}.stat-val{font-size:22px}
+  .doc-act .btn-ghost{display:none}.lg-card{padding:28px 22px}
+}
+</style>
+</head>
+<body>
+
+<div class="page-loader" id="page-loader">
+  <div class="ld-emblem"><i class="fas fa-landmark"></i></div>
+  <div class="ld-title">ລະບົບຄັງຄວາມຮູ້</div>
+  <div class="ld-sub">Knowledge Management System</div>
+  <div class="ld-spin"></div>
+</div>
+
+<div id="toasts"></div>
+
+<div class="overlay" id="conf-overlay">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-ico" style="background:var(--red-bg);color:var(--red)"><i class="fas fa-triangle-exclamation"></i></div>
+      <div><div class="modal-ttl" id="conf-title">ຢືນຢັນ</div><div class="modal-sub" id="conf-body"></div></div>
+    </div>
+    <div class="modal-act">
+      <button class="btn btn-ghost" onclick="closeConf()">ຍົກເລີກ</button>
+      <button class="btn btn-danger" id="conf-ok">ຢືນຢັນລຶບ</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-page">
+  <div class="lg-card">
+    <div class="lg-emblem"><i class="fas fa-landmark"></i></div>
+    <div class="lg-org" id="lg-org">ອົງກອນ</div>
+    <div class="lg-sys">KNOWLEDGE MANAGEMENT SYSTEM — ADMIN</div>
+    <div class="lg-div"></div>
+    <div class="lg-notice">
+      <i class="fas fa-shield-halved"></i>
+      <p>ພື້ນທີ່ນີ້ສຳລັບ <strong>Admin</strong> ເທົ່ານັ້ນ<br>ຜູ້ໃຊ້ທົ່ວໄປດາວໂຫລດໄດ້ໂດຍບໍ່ຕ້ອງ Login</p>
+    </div>
+    <div class="lg-field">
+      <i class="fas fa-user ico"></i>
+      <input class="lg-ctrl" type="text" id="lg-user" placeholder="Username">
+    </div>
+    <div class="lg-field">
+      <i class="fas fa-lock ico"></i>
+      <input class="lg-ctrl" type="password" id="lg-pass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="lg-btn" id="lg-btn" onclick="doLogin()">
+      <i class="fas fa-right-to-bracket" style="margin-right:8px"></i>ເຂົ້າສູ່ລະບົບ Admin
+    </button>
+    <div class="lg-err" id="lg-err"></div>
+    <div class="lg-back"><a onclick="showApp()">← ກັບໄປໜ້າສາທາລະນະ</a></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <div class="sb-emblem"><i class="fas fa-landmark"></i></div>
+      <div>
+        <div class="sb-name" id="sb-org">ຄັງຄວາມຮູ້</div>
+        <div class="sb-sub">KNOWLEDGE MANAGEMENT</div>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-sec">ເມນູຫຼັກ</div>
+      <button class="nav-item active" onclick="showPage('browse')" data-page="browse"><i class="fas fa-house"></i> ໜ້າຫຼັກ</button>
+      <button class="nav-item" onclick="showPage('browse')" data-page="docs"><i class="fas fa-folder-open"></i> ເອກະສານ <span class="nav-badge" id="nb-docs">0</span></button>
+      <div class="nav-div"></div>
+      <div id="adm-nav" style="display:none">
+        <div class="sb-sec">ຜູ້ດູແລລະບົບ</div>
+        <button class="nav-item" onclick="showPage('upload')" data-page="upload"><i class="fas fa-cloud-arrow-up"></i> ອັບໂຫລດ</button>
+        <button class="nav-item" onclick="showPage('manage')" data-page="manage"><i class="fas fa-table-list"></i> ຈັດການ</button>
+        <div class="nav-div"></div>
+      </div>
+      <div class="sb-sec">ລະບົບ</div>
+      <button class="nav-item" id="nav-lg-btn" onclick="gotoLogin()"><i class="fas fa-shield-halved"></i> Admin Login</button>
+    </nav>
+    <div class="sb-foot">
+      <div class="u-chip pub" id="sb-chip">G</div>
+      <div class="u-info">
+        <div class="u-name" id="sb-uname">ຜູ້ໃຊ້ທົ່ວໄປ</div>
+        <span class="u-tag pub" id="sb-utag">PUBLIC</span>
+      </div>
+      <button class="sb-logout" id="sb-lo" onclick="doLogout()" title="ອອກ" style="display:none">
+        <i class="fas fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="top-hdr">
+      <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div class="hdr-info">
+        <div class="hdr-title" id="hdr-title">ໜ້າຫຼັກ</div>
+        <div class="hdr-crumb" id="hdr-crumb">ລະບົບຄັງຄວາມຮູ້ອົງກອນ</div>
+      </div>
+      <div class="hdr-sep" id="hdr-sep"></div>
+      <div class="search-bar" id="hdr-srch">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="ຄົ້ນຫາເອກະສານ..." id="srch-in" oninput="onSearch(this.value)">
+      </div>
+      <div class="hdr-actions">
+        <div class="rt-badge off" id="rt-badge">
+          <div class="rt-dot"></div>
+          <span id="rt-lbl">ກຳລັງເຊື່ອມ...</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="hdr-adm-btn" onclick="gotoLogin()">
+          <i class="fas fa-shield-halved"></i> Admin
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- BROWSE -->
+      <div id="page-browse">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-ico si-blue"><i class="fas fa-file-lines"></i></div><div><div class="stat-val" id="st-total">0</div><div class="stat-lbl">ເອກະສານທັງໝົດ</div></div></div>
+          <div class="stat-card"><div class="stat-ico si-gold"><i class="fas fa-file-pdf"></i></div><div><div class="stat-val" id="st-pdf">0</div><div class="stat-lbl">PDF</div></div></div>
+          <div class="stat-card"><div class="stat-ico si-green"><i class="fas fa-download"></i></div><div><div class="stat-val" id="st-dl">0</div><div class="stat-lbl">ດາວໂຫລດທັງໝົດ</div></div></div>
+          <div class="stat-card"><div class="stat-ico si-red"><i class="fas fa-database"></i></div><div><div class="stat-val" id="st-size">0 B</div><div class="stat-lbl">ຂະໜາດລວມ</div></div></div>
+        </div>
+        <div class="filter-row" id="filter-row">
+          <button class="pill active" onclick="setCat('all')">ທັງໝົດ <span class="pill-n">0</span></button>
+        </div>
+        <div class="card">
+          <div class="doc-list" id="doc-list">
+            <div class="empty"><i class="fas fa-circle-notch fa-spin" style="opacity:.3;font-size:36px"></i><h3>ກຳລັງໂຫລດ Realtime...</h3></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW -->
+      <div id="page-view" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+          <button class="btn btn-ghost btn-sm" onclick="showPage('browse')"><i class="fas fa-arrow-left"></i> ກັບ</button>
+          <div style="flex:1"></div>
+          <button class="btn btn-primary" id="dl-btn" onclick="downloadCurrent()"><i class="fas fa-download"></i> ດາວໂຫລດ</button>
+        </div>
+        <div class="view-hdr">
+          <div style="display:flex;align-items:flex-start;gap:18px">
+            <div class="view-fi fi-pdf" id="view-icon"></div>
+            <div style="flex:1;min-width:0">
+              <div class="view-title" id="view-name"></div>
+              <div class="view-meta">
+                <div class="view-mi"><i class="fas fa-folder"></i><span id="view-cat"></span></div>
+                <div class="view-mi"><i class="fas fa-weight-hanging"></i><span id="view-size"></span></div>
+                <div class="view-mi"><i class="fas fa-calendar-days"></i><span id="view-date"></span></div>
+                <div class="view-mi"><i class="fas fa-download"></i><span id="view-dls"></span> ຄັ້ງ</div>
+              </div>
+              <div class="view-desc" id="view-desc" style="display:none"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card card-body" id="preview-card">
+          <div class="view-loading" id="view-loading">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            <p id="view-loading-txt">ກຳລັງໂຫລດໄຟລ໌...</p>
+            <div class="view-load-bar"><div class="view-load-fill"></div></div>
+          </div>
+          <iframe id="frame-prev" class="prev-frame" style="display:none"></iframe>
+          <img id="img-prev" class="prev-img" style="display:none" alt="preview">
+          <div id="no-prev" class="empty" style="display:none">
+            <i class="fas fa-file-circle-question"></i>
+            <h3>ບໍ່ສາມາດ Preview ໄດ້</h3>
+            <p>ກະລຸນາດາວໂຫລດໄຟລ໌ເພື່ອເປີດ</p>
+            <button class="btn btn-primary" onclick="downloadCurrent()" style="margin:18px auto 0"><i class="fas fa-download"></i> ດາວໂຫລດ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- UPLOAD (admin) -->
+      <div id="page-upload" style="display:none">
+        <div style="max-width:720px">
+          <div class="card" style="margin-bottom:18px">
+            <div class="card-hdr">
+              <div class="card-ttl"><i class="fas fa-tag" style="margin-right:8px;color:var(--gold)"></i>ຂໍ້ມູນເອກະສານ</div>
+              <span class="free-badge"><i class="fas fa-check-circle"></i>Firebase ຟຣີ 100%</span>
+            </div>
+            <div class="card-body">
+              <div class="form-grid-2">
+                <div class="fg">
+                  <label class="fl">ໝວດໝູ່ <span class="req">*</span></label>
+                  <select class="fc" id="up-cat"><option value="">— ເລືອກໝວດໝູ່ —</option></select>
+                  <div class="fhint">ຫຼື ສ້າງໝວດໝູ່ໃໝ່ຂ້າງລຸ່ມ</div>
+                </div>
+                <div class="fg">
+                  <label class="fl">ສ້າງໝວດໝູ່ໃໝ່</label>
+                  <input class="fc" type="text" id="up-newcat" placeholder="ຊື່ໝວດໝູ່ (ຖ້າຕ້ອງການ)">
+                </div>
+              </div>
+              <div class="fg" style="margin-top:14px">
+                <label class="fl">ຄຳອະທິບາຍ</label>
+                <textarea class="fc ta" id="up-desc" placeholder="ອະທິບາຍສັ້ນໆ..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hdr"><div class="card-ttl"><i class="fas fa-cloud-arrow-up" style="margin-right:8px;color:var(--blue)"></i>ເລືອກໄຟລ໌</div></div>
+            <div class="card-body">
+              <div class="upzone" id="upzone"
+                onclick="document.getElementById('file-in').click()"
+                ondragover="ev=>{ev.preventDefault();document.getElementById('upzone').classList.add('drag-over')}"
+                ondragleave="document.getElementById('upzone').classList.remove('drag-over')"
+                ondrop="onDrop(event)">
+                <div class="upzone-ico"><i class="fas fa-cloud-arrow-up"></i></div>
+                <h3>ລາກ &amp; ວາງໄຟລ໌ທີ່ນີ້</h3>
+                <p>ຫຼື <span>ຄລິກເລືອກໄຟລ໌</span> · PDF, Word, Excel, PPT, ຮູບພາບ</p>
+                <p style="margin-top:6px;font-size:12px;color:var(--text-mute)">ແນະນຳ ຂະໜາດ &lt; 5MB ຕໍ່ໄຟລ໌ (Firebase ຟຣີ)</p>
+              </div>
+              <input type="file" id="file-in" multiple style="display:none" onchange="addFiles(this.files)" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp">
+              <div class="fqueue" id="fqueue"></div>
+              <div id="up-prog" style="display:none">
+                <div class="prog-wrap">
+                  <div class="prog-info">
+                    <span class="prog-lbl" id="up-lbl">ກຳລັງອ່ານໄຟລ໌...</span>
+                    <span class="prog-pct" id="up-pct">0%</span>
+                  </div>
+                  <div class="prog-bar"><div class="prog-fill" id="up-fill" style="width:0%"></div></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:20px">
+                <button class="btn btn-primary" id="up-btn" onclick="doUpload()"><i class="fas fa-cloud-arrow-up"></i> ເລີ່ມອັບໂຫລດ</button>
+                <button class="btn btn-ghost" onclick="clearQ()"><i class="fas fa-xmark"></i> ລ້າງ</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MANAGE (admin) -->
+      <div id="page-manage" style="display:none">
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-ttl"><i class="fas fa-list-check" style="margin-right:8px;color:var(--gold)"></i>ຈັດການເອກະສານ <span id="mg-count" style="font-size:12px;font-weight:400;color:var(--text-light)"></span></div>
+            <button class="btn btn-primary btn-sm" onclick="showPage('upload')"><i class="fas fa-plus"></i> ເພີ່ມໃໝ່</button>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:36%">ຊື່ໄຟລ໌</th>
+                  <th>ໝວດໝູ່</th>
+                  <th>ຂະໜາດ</th>
+                  <th>ດາວໂຫລດ</th>
+                  <th>ວັນທີ</th>
+                  <th>ດຳເນີນການ</th>
+                </tr>
+              </thead>
+              <tbody id="mg-tbody">
+                <tr><td colspan="6" style="text-align:center;padding:48px;color:var(--text-light)"><i class="fas fa-circle-notch fa-spin"></i></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ══════════════════════════════════
+  ⚙️  CONFIG
+══════════════════════════════════ -->
+<script>
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyCn_GcnnBx9_FE6iKAzg4o-WbCoMSOrrc4",
+  authDomain:        "manual-69791.firebaseapp.com",
+  projectId:         "manual-69791",
+  messagingSenderId: "773227714735",
+  appId:             "1:773227714735:web:dade7e26397b3f2da39c5a",
+  databaseURL:       "https://manual-69791-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+const ORG_NAME       = "ຊື່ອົງກອນຂອງທ່ານ";
+const ADMIN_USERNAME = "Trust";
+const ADMIN_PASSWORD = "1234";
+</script>
+
+<script>
+const IS_CFG = FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY";
+let db, isAdmin=false, allDocs=[], cats=[], selCat='all', curDoc=null, curData=null, pendingFiles=[], searchQ='';
+
+document.getElementById('sb-org').textContent = ORG_NAME;
+document.getElementById('lg-org').textContent = ORG_NAME;
+if(sessionStorage.getItem('kms_admin')==='1'){ isAdmin=true; }
+
+if(IS_CFG){
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.database();
+  db.ref('.info/connected').on('value', snap=>{
+    const ok=snap.val();
+    const b=document.getElementById('rt-badge'), l=document.getElementById('rt-lbl');
+    if(ok){ b.className='rt-badge'; l.textContent='Realtime'; }
+    else  { b.className='rt-badge off'; l.textContent='ຂາດການເຊື່ອມ'; }
+  });
+  // Realtime listener — metadata only (no file data)
+  db.ref('documents').on('value', snap=>{
+    const raw=snap.val()||{};
+    allDocs=Object.entries(raw).map(([id,v])=>({id,...v})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    document.getElementById('nb-docs').textContent=allDocs.length;
+    buildCats(); updateStats(); renderList(); renderMgTable();
+  });
+  setTimeout(()=>{ hidLoader(); showApp(); }, 900);
+} else {
+  setTimeout(()=>{ hidLoader(); showApp(); }, 900);
+}
+
+function hidLoader(){ const l=document.getElementById('page-loader'); l.style.opacity='0'; setTimeout(()=>l.remove(),400); }
+
+/* ── AUTH ── */
+function gotoLogin(){ document.getElementById('app').style.display='none'; document.getElementById('login-page').style.display='flex'; }
+function showApp(){ document.getElementById('login-page').style.display='none'; document.getElementById('app').style.display='flex'; updateSbUser(); showPage('browse'); }
+function doLogin(){
+  const u=document.getElementById('lg-user').value.trim();
+  const p=document.getElementById('lg-pass').value;
+  const err=document.getElementById('lg-err');
+  err.textContent='';
+  if(!u||!p){err.textContent='ກະລຸນາໃສ່ Username ແລະ Password';return;}
+  if(u===ADMIN_USERNAME && p===ADMIN_PASSWORD){
+    isAdmin=true; sessionStorage.setItem('kms_admin','1');
+    showApp(); showPage('upload');
+    toast('ຍິນດີຕ້ອນຮັບ Admin '+ADMIN_USERNAME+' !','ok');
+  } else {
+    err.textContent='Username ຫຼື Password ບໍ່ຖືກຕ້ອງ';
+    document.getElementById('lg-pass').value='';
+    document.getElementById('lg-pass').focus();
+  }
+}
+function doLogout(){ isAdmin=false; sessionStorage.removeItem('kms_admin'); updateSbUser(); showPage('browse'); toast('ອອກຈາກລະບົບແລ້ວ'); }
+function updateSbUser(){
+  const chip=document.getElementById('sb-chip'), uname=document.getElementById('sb-uname');
+  const utag=document.getElementById('sb-utag'), lo=document.getElementById('sb-lo');
+  const admNav=document.getElementById('adm-nav'), hdrAdm=document.getElementById('hdr-adm-btn');
+  const navLg=document.getElementById('nav-lg-btn');
+  if(isAdmin){
+    chip.textContent='T'; chip.className='u-chip adm';
+    uname.textContent=ADMIN_USERNAME; utag.textContent='ADMIN'; utag.className='u-tag adm';
+    lo.style.display='block'; admNav.style.display='block';
+    hdrAdm.style.display='none'; navLg.style.display='none';
+  } else {
+    chip.textContent='G'; chip.className='u-chip pub';
+    uname.textContent='ຜູ້ໃຊ້ທົ່ວໄປ'; utag.textContent='PUBLIC'; utag.className='u-tag pub';
+    lo.style.display='none'; admNav.style.display='none';
+    hdrAdm.style.display='flex'; navLg.style.display='flex';
+  }
+}
+
+/* ── PAGES ── */
+const PG_TITLE={browse:'ໜ້າຫຼັກ',view:'ເບິ່ງເອກະສານ',upload:'ອັບໂຫລດເອກະສານ',manage:'ຈັດການເອກະສານ'};
+const PG_CRUMB={browse:'ລາຍການເອກະສານທັງໝົດ',view:'ລາຍການ → ເອກະສານ',upload:'Admin → ອັບໂຫລດ',manage:'Admin → ຈັດການ'};
+function showPage(pg){
+  ['browse','view','upload','manage'].forEach(p=>document.getElementById('page-'+p).style.display=p===pg?'block':'none');
+  document.getElementById('hdr-title').textContent=PG_TITLE[pg]||pg;
+  document.getElementById('hdr-crumb').textContent=PG_CRUMB[pg]||'';
+  const sh=pg==='browse';
+  document.getElementById('hdr-srch').style.display=sh?'':'none';
+  document.getElementById('hdr-sep').style.display=sh?'':'none';
+  document.querySelectorAll('.nav-item[data-page]').forEach(el=>el.classList.remove('active'));
+  const t=document.querySelector('.nav-item[data-page="'+pg+'"]')||document.querySelector('.nav-item[data-page="browse"]');
+  if(t) t.classList.add('active');
+  if(pg==='manage') renderMgTable();
+  if(pg==='upload') popCatSel();
+  closeSidebar();
+}
+
+/* ── DATA (metadata only — ໄວ) ── */
+function buildCats(){
+  cats=[...new Set(allDocs.map(d=>d.category).filter(Boolean))].sort();
+  const row=document.getElementById('filter-row');
+  row.innerHTML='<button class="pill '+(selCat==='all'?'active':'')+'" onclick="setCat(\'all\')">ທັງໝົດ <span class="pill-n">'+allDocs.length+'</span></button>';
+  cats.forEach(c=>{
+    const n=allDocs.filter(d=>d.category===c).length;
+    row.innerHTML+='<button class="pill '+(selCat===c?'active':'')+'" onclick="setCat(\''+esc(c)+'\')">'+esc(c)+' <span class="pill-n">'+n+'</span></button>';
+  });
+}
+function setCat(c){ selCat=c; buildCats(); renderList(); }
+function onSearch(q){ searchQ=q.toLowerCase(); renderList(); }
+function filtered(){
+  return allDocs.filter(d=>{
+    const mc=selCat==='all'||d.category===selCat;
+    const mq=!searchQ||d.name.toLowerCase().includes(searchQ)||(d.description||'').toLowerCase().includes(searchQ)||(d.category||'').toLowerCase().includes(searchQ);
+    return mc&&mq;
+  });
+}
+function updateStats(){
+  document.getElementById('st-total').textContent=allDocs.length;
+  document.getElementById('st-pdf').textContent=allDocs.filter(d=>d.type==='pdf').length;
+  document.getElementById('st-dl').textContent=allDocs.reduce((s,d)=>s+(d.downloads||0),0).toLocaleString();
+  document.getElementById('st-size').textContent=fmtSz(allDocs.reduce((s,d)=>s+(d.size||0),0));
+}
+function renderList(){
+  const list=document.getElementById('doc-list');
+  const docs=filtered();
+  if(!docs.length){
+    list.innerHTML='<div class="empty"><i class="fas fa-folder-open"></i><h3>'+(searchQ||selCat!=='all'?'ບໍ່ພົບເອກະສານ':'ຍັງບໍ່ມີເອກະສານ')+'</h3><p>'+(searchQ?'ລອງຄົ້ນຫາດ້ວຍຄຳອື່ນ':'ຕິດຕໍ່ Admin ເພື່ອຂໍເອກະສານ')+'</p></div>';
+    return;
+  }
+  list.innerHTML=docs.map(d=>
+    '<button class="doc-row" onclick="viewDoc(\''+d.id+'\')">'+
+    '<div class="fi '+fiCls(d.type)+'">'+fiIco(d.type)+'</div>'+
+    '<div class="doc-info">'+
+    '<div class="doc-name">'+esc(d.name)+'</div>'+
+    '<div class="doc-meta">'+
+    '<span class="cat-badge"><i class="fas fa-folder"></i>'+esc(d.category||'ທົ່ວໄປ')+'</span>'+
+    '<span class="mc"><i class="fas fa-weight-hanging"></i>'+fmtSz(d.size)+'</span>'+
+    '<span class="mc"><i class="fas fa-calendar"></i>'+fmtDt(d.createdAt)+'</span>'+
+    '<span class="mc"><i class="fas fa-download"></i>'+(d.downloads||0)+'</span>'+
+    '</div></div>'+
+    '<div class="doc-act">'+
+    '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();viewDoc(\''+d.id+'\')"><i class="fas fa-eye"></i> ເບິ່ງ</button>'+
+    '<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();dlById(\''+d.id+'\')"><i class="fas fa-download"></i> ດາວໂຫລດ</button>'+
+    '</div></button>'
+  ).join('');
+}
+
+/* ── VIEW + DOWNLOAD (lazy load ໄຟລ໌ຈາກ DB) ── */
+function viewDoc(id){
+  const d=allDocs.find(x=>x.id===id); if(!d) return;
+  curDoc=d; curData=null;
+  document.getElementById('view-name').textContent=d.name;
+  document.getElementById('view-cat').textContent=d.category||'ທົ່ວໄປ';
+  document.getElementById('view-size').textContent=fmtSz(d.size);
+  document.getElementById('view-date').textContent=fmtDt(d.createdAt);
+  document.getElementById('view-dls').textContent=d.downloads||0;
+  const de=document.getElementById('view-desc'); de.textContent=d.description||''; de.style.display=d.description?'block':'none';
+  const vi=document.getElementById('view-icon'); vi.className='view-fi '+fiCls(d.type); vi.innerHTML=fiIco(d.type);
+  document.getElementById('view-loading').style.display='block';
+  document.getElementById('view-loading-txt').textContent='ກຳລັງໂຫລດ '+d.name+' ...';
+  document.getElementById('frame-prev').style.display='none';
+  document.getElementById('img-prev').style.display='none';
+  document.getElementById('no-prev').style.display='none';
+  document.getElementById('dl-btn').disabled=true;
+  showPage('view');
+  // Load file data on demand
+  db.ref('files/'+id).once('value').then(snap=>{
+    const data=snap.val();
+    curData=data;
+    document.getElementById('view-loading').style.display='none';
+    document.getElementById('dl-btn').disabled=false;
+    if(!data){ document.getElementById('no-prev').style.display='block'; return; }
+    if(d.type==='img'){ const im=document.getElementById('img-prev'); im.src=data; im.style.display='block'; }
+    else if(d.type==='pdf'){ const fr=document.getElementById('frame-prev'); fr.src=data; fr.style.display='block'; }
+    else{ document.getElementById('no-prev').style.display='block'; }
+  }).catch(()=>{ document.getElementById('view-loading').style.display='none'; document.getElementById('no-prev').style.display='block'; });
+}
+
+function downloadCurrent(){ if(curDoc && curData) triggerDl(curDoc, curData); else if(curDoc) dlById(curDoc.id); }
+
+function dlById(id){
+  const d=allDocs.find(x=>x.id===id); if(!d) return;
+  toast('ກຳລັງໂຫລດ '+d.name+' ...','');
+  db.ref('files/'+id).once('value').then(snap=>{
+    const data=snap.val(); if(!data){ toast('ບໍ່ພົບໄຟລ໌','err'); return; }
+    triggerDl(d, data);
+  });
+}
+
+function triggerDl(d, data){
+  if(IS_CFG) db.ref('documents/'+d.id+'/downloads').transaction(v=>(v||0)+1);
+  const a=document.createElement('a'); a.href=data; a.download=d.name; a.click();
+  toast('ດາວໂຫລດ: '+d.name,'ok');
+  if(curDoc?.id===d.id) document.getElementById('view-dls').textContent=(d.downloads||0)+1;
+}
+
+/* ── UPLOAD — ເກັບ base64 ໃນ Firebase DB ── */
+function popCatSel(){
+  const sel=document.getElementById('up-cat');
+  sel.innerHTML='<option value="">— ເລືອກໝວດໝູ່ —</option>'+cats.map(c=>'<option>'+esc(c)+'</option>').join('');
+}
+function onDrop(e){ e.preventDefault(); document.getElementById('upzone').classList.remove('drag-over'); addFiles(e.dataTransfer.files); }
+function addFiles(fl){ pendingFiles=[...pendingFiles,...Array.from(fl)]; renderQ(); }
+function removeQ(i){ pendingFiles.splice(i,1); renderQ(); }
+function clearQ(){ pendingFiles=[]; renderQ(); }
+function renderQ(){
+  const q=document.getElementById('fqueue');
+  if(!pendingFiles.length){ q.innerHTML=''; return; }
+  q.innerHTML=pendingFiles.map((f,i)=>
+    '<div class="fq-item">'+
+    '<span style="font-size:18px;color:'+fiClr(ftype(f.name))+'">'+fiIco(ftype(f.name))+'</span>'+
+    '<span class="fq-name">'+esc(f.name)+'</span>'+
+    '<span class="fq-sz">'+fmtSz(f.size)+'</span>'+
+    '<button class="fq-rm" onclick="removeQ('+i+')"><i class="fas fa-xmark"></i></button>'+
+    '</div>'
+  ).join('');
+}
+
+function readFileAsBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>res(e.target.result);
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+}
+
+async function doUpload(){
+  if(!pendingFiles.length){ toast('ກະລຸນາເລືອກໄຟລ໌','err'); return; }
+  if(!IS_CFG){ toast('ກະລຸນາຕັ້ງຄ່າ Firebase ກ່ອນ','err'); return; }
+  let cat=document.getElementById('up-cat').value||document.getElementById('up-newcat').value.trim();
+  if(!cat){ toast('ກະລຸນາໃສ່ໝວດໝູ່','err'); return; }
+  const desc=document.getElementById('up-desc').value.trim();
+  const btn=document.getElementById('up-btn'); btn.disabled=true;
+  const prog=document.getElementById('up-prog'); prog.style.display='block';
+  const fill=document.getElementById('up-fill');
+  const lbl=document.getElementById('up-lbl');
+  const pct=document.getElementById('up-pct');
+  let ok=0;
+  for(let i=0;i<pendingFiles.length;i++){
+    const file=pendingFiles[i];
+    lbl.textContent='ກຳລັງອ່ານໄຟລ໌ ('+(i+1)+'/'+pendingFiles.length+'): '+file.name;
+    fill.style.width='30%'; pct.textContent='30%';
+    try{
+      const b64=await readFileAsBase64(file);
+      lbl.textContent='ກຳລັງບັນທຶກ Firebase: '+file.name;
+      fill.style.width='60%'; pct.textContent='60%';
+      // Save metadata
+      const ref=db.ref('documents').push();
+      await ref.set({
+        name:file.name, category:cat, description:desc,
+        type:ftype(file.name), size:file.size, downloads:0,
+        createdAt:Date.now(), uploadedBy:ADMIN_USERNAME
+      });
+      // Save file data separately (lazy load)
+      await db.ref('files/'+ref.key).set(b64);
+      fill.style.width='100%'; pct.textContent='100%';
+      ok++;
+    }catch(e){ toast('ຜິດພາດ: '+file.name,'err'); console.error(e); }
+  }
+  if(ok) toast('ອັບໂຫລດສຳເລັດ '+ok+' ໄຟລ໌! 🎉','ok');
+  clearQ(); prog.style.display='none';
+  document.getElementById('up-newcat').value='';
+  document.getElementById('up-desc').value='';
+  btn.disabled=false;
+}
+
+/* ── MANAGE TABLE ── */
+function renderMgTable(){
+  const tb=document.getElementById('mg-tbody'); if(!tb) return;
+  const mc=document.getElementById('mg-count'); if(mc) mc.textContent='('+allDocs.length+' ລາຍການ)';
+  if(!allDocs.length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:48px;color:var(--text-light)"><i class="fas fa-folder-open" style="font-size:28px;opacity:.3;display:block;margin-bottom:10px"></i>ຍັງບໍ່ມີເອກະສານ</td></tr>';
+    return;
+  }
+  tb.innerHTML=allDocs.map(d=>
+    '<tr>'+
+    '<td><div style="display:flex;align-items:center;gap:10px">'+
+    '<span style="font-size:17px;color:'+fiClr(d.type)+'">'+fiIco(d.type)+'</span>'+
+    '<div><div style="font-weight:500;font-size:13px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.name)+'</div>'+
+    '<div style="font-size:11px;color:var(--text-light);margin-top:1px">'+esc(d.uploadedBy||'')+'</div></div></div></td>'+
+    '<td><span class="cat-badge">'+esc(d.category||'ທົ່ວໄປ')+'</span></td>'+
+    '<td style="color:var(--text-light)">'+fmtSz(d.size)+'</td>'+
+    '<td><span style="font-weight:600;color:var(--blue)">'+(d.downloads||0)+'</span></td>'+
+    '<td style="color:var(--text-light);white-space:nowrap">'+fmtDt(d.createdAt)+'</td>'+
+    '<td><div style="display:flex;gap:6px">'+
+    '<button class="btn btn-ghost btn-xs btn-icon" onclick="viewDoc(\''+d.id+'\')" title="ເບິ່ງ"><i class="fas fa-eye"></i></button>'+
+    '<button class="btn btn-danger btn-xs btn-icon" onclick="confDel(\''+d.id+'\')" title="ລຶບ"><i class="fas fa-trash"></i></button>'+
+    '</div></td></tr>'
+  ).join('');
+}
+
+/* ── DELETE ── */
+function confDel(id){
+  const d=allDocs.find(x=>x.id===id); if(!d) return;
+  document.getElementById('conf-title').textContent='ລຶບເອກະສານ';
+  document.getElementById('conf-body').textContent='ທ່ານຕ້ອງການລຶບ "'+d.name+'" ແທ້ບໍ?';
+  document.getElementById('conf-ok').onclick=()=>{ closeConf(); doDel(id); };
+  document.getElementById('conf-overlay').classList.add('open');
+}
+function closeConf(){ document.getElementById('conf-overlay').classList.remove('open'); }
+async function doDel(id){
+  const d=allDocs.find(x=>x.id===id); if(!d) return;
+  try{
+    await db.ref('documents/'+id).remove();
+    await db.ref('files/'+id).remove();
+    toast('ລຶບ "'+d.name+'" ສຳເລັດ','ok');
+  }catch(e){ toast('ເກີດຂໍ້ຜິດພາດ','err'); console.error(e); }
+}
+
+/* ── HELPERS ── */
+function ftype(n){const e=(n||'').split('.').pop().toLowerCase();if(e==='pdf')return'pdf';if(['jpg','jpeg','png','gif','webp','svg'].includes(e))return'img';if(['doc','docx'].includes(e))return'doc';if(['xls','xlsx','csv'].includes(e))return'xls';if(['ppt','pptx'].includes(e))return'ppt';return'other';}
+function fiCls(t){return{pdf:'fi-pdf',img:'fi-img',doc:'fi-doc',xls:'fi-xls',ppt:'fi-ppt',other:'fi-other'}[t]||'fi-other';}
+function fiIco(t){return{pdf:'<i class="fas fa-file-pdf"></i>',img:'<i class="fas fa-file-image"></i>',doc:'<i class="fas fa-file-word"></i>',xls:'<i class="fas fa-file-excel"></i>',ppt:'<i class="fas fa-file-powerpoint"></i>',other:'<i class="fas fa-file"></i>'}[t]||'<i class="fas fa-file"></i>';}
+function fiClr(t){return{pdf:'#DC2626',img:'#16A34A',doc:'#2563EB',xls:'#15803D',ppt:'#EA580C',other:'#7C3AED'}[t]||'#6B7280';}
+function fmtSz(b){if(!b)return'0 B';if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(0)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(2)+' GB';}
+function fmtDt(ts){if(!ts)return'—';return new Date(ts).toLocaleDateString('lo-LA',{day:'2-digit',month:'short',year:'numeric'});}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg,type){
+  const c=document.getElementById('toasts'),t=document.createElement('div');
+  const ic={ok:'circle-check',err:'circle-xmark',warn:'triangle-exclamation'}[type]||'info-circle';
+  t.className='toast'+(type?' '+type:'');
+  t.innerHTML='<i class="fas fa-'+ic+'"></i>'+esc(msg);
+  c.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(110%)'; t.style.transition='all .3s'; setTimeout(()=>t.remove(),300); },3500);
+}
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sb-overlay').classList.toggle('open'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sb-overlay').classList.remove('open'); }
+</script>
+</body>
+</html>
